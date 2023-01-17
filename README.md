@@ -20,9 +20,9 @@
   You will need to move glfw3.dll into the build folder and arial_rounded.tff to build/assets/
   
 ## Usage
-  Your clicks are placed in /build/player1
+  Clicks should be placed in /build/player1
   
-  Clicks structure should look like the following
+  Click structure should look like the following
   
   ```
   player1
@@ -51,7 +51,6 @@
       │   1.wav
       │   2.wav
       │   ...
-  
   ```
   
 ## Screenshots
