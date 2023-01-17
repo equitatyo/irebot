@@ -1,7 +1,7 @@
 ![Irebot](imgs/icon.png)
 
-<a href="https://discord.gg/RQttgV6Mmg"><img src="https://img.shields.io/discord/942146433652506714"></a>
-
+<a href="https://discord.gg/RQttgV6Mmg"><img src="https://img.shields.io/discord/942146433652506714"/></a>
+<img src="https://img.shields.io/github/issues/equitatyo/irebot"/>
 
 ## Building
 
