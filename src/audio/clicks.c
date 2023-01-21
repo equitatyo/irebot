@@ -116,13 +116,14 @@ float frames_to_samples(float frames, float fps, float sample_rate) {
 }
 
 void write_samples(drwav in, int32_t* out, int offset, float volume) {
-    size_t size = (size_t)in.totalPCMFrameCount * in.channels * sizeof(int32_t) + sizeof(int32_t);
-    int32_t samples[in.totalPCMFrameCount * in.channels * sizeof(int32_t)];
+    size_t size = (size_t)(in.totalPCMFrameCount * in.channels);
+    int32_t samples[size];
 
     int r = drwav_read_pcm_frames_s32(&in, in.totalPCMFrameCount, samples);
 
-    for (int j = 0; j < in.totalPCMFrameCount; j++)
-        out[offset + j] += samples[j * 2] * volume;
+    for (int i = 0; i < size; i += in.channels)
+        for (int j = 0; j < in.channels; j++)
+            out[offset + i + j] += samples[i + j] * volume;
 }
 
 int rand_range(int min, int max) {
@@ -130,9 +131,10 @@ int rand_range(int min, int max) {
 }
 
 drwav get_random_click(Clicks clicks) {
+    return clicks.files[clicks.start];
     drwav click;
     do {
-        int rand_index = rand_range(clicks.start, clicks.count);
+        int rand_index = rand_range(clicks.start, clicks.count + clicks.start);
         click = clicks.files[rand_index];
 
     } while (!click.sampleRate);
@@ -144,12 +146,12 @@ int generate_clicks(char* path, Macro* macro, Clicks** player1, Clicks** player2
 
     long unsigned sample_len = frames_to_samples((float)macro->actions[macro->action_num-1].frame, (float)macro->fps, (float)sample_click.sampleRate) + sample_click.totalPCMFrameCount * 2;
 
-    int32_t* samples = malloc(sample_len * sizeof(int32_t)); //TODO: add other channels
+    int32_t* samples = malloc(sample_len * sample_click.channels * sizeof(int32_t));
 
     drwav_data_format format;
     format.container = drwav_container_riff;
     format.format = DR_WAVE_FORMAT_PCM;
-    format.channels = 1;
+    format.channels = sample_click.channels;
     format.sampleRate = sample_click.sampleRate;
     format.bitsPerSample = sample_click.bitsPerSample;
 
@@ -208,7 +210,7 @@ int generate_clicks(char* path, Macro* macro, Clicks** player1, Clicks** player2
             int next_delta = -1;
             int last_delta = -1;
 
-            for (int j = i + 1; !macro->actions[j].player2_holding && j < macro->action_num ; j++) {
+            for (int j = i + 1; !macro->actions[j].player2_holding && j < macro->action_num && j - i < 50; j++) {
                 next_delta = macro->actions[j].frame - action.frame;
             }
 
