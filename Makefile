@@ -1,4 +1,4 @@
-CC = x86_64-w64-mingw32-gcc-win32
+CC = gcc
 CFLAGS = -Ofast -flto -fno-fat-lto-objects -ffast-math -fPIC
 
 INCLUDES = -I./libraries/GLFW/include -I./libraries/fontstash -I./src/ -I./src/gui/ -I./src/audio/
