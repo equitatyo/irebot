@@ -1,6 +1,6 @@
 #include "networking.h"
 
-#include <winsock2.h> //we have to include winsock2.h before windows.h
+#include <winsock2.h>
 
 #include "includes.h"
 
@@ -42,12 +42,6 @@ char* get_request(char* path, int* out_size) {
 
 	int data_left = recv(s, response, 4096, 0);
 	response_len += data_left;
-
-	/*while (data_left > 0) { //i do not remember why i did this
-		printf(".");
-		data_left = recv(s, response + response_len, 4096 - response_len, 0);
-		response_len += data_left;
-	}*/
 
 	if (out_size) *out_size = response_len;
 
@@ -99,7 +93,7 @@ void update_to_latest() {
 
 	URLDownloadToFile(NULL, url, "temp.exe", 0, NULL);
 
-	char data[] = "@echo off\ntaskkill /F /IM irebot.exe\ntimeout /T 2\ndel irebot.exe\ncopy irebot.exe irebot.exe.bak\nmove temp.exe irebot.exe\nstart irebot.exe";
+	char data[] = "@echo off\ntaskkill /F /IM irebot.exe\ntimeout /T 2\ncopy irebot.exe irebot.exe.bak\nmove temp.exe irebot.exe\nstart irebot.exe";
 	FILE* batch_h = fopen("update.bat", "w");
 	fwrite(data, strlen(data), 1, batch_h);
 	fclose(batch_h);

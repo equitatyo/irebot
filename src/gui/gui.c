@@ -36,7 +36,8 @@ Widget* update_clicks; //button
 
 Widget* render_button; //button
 
-Clicks** clicks; //TODO: change this
+Clicks** player1;
+Clicks** player2;
 
 void choose_macro_callback() {
 	OPENFILENAMEA ofn;
@@ -70,13 +71,14 @@ void render_callback() {
     Macro* parsed_macro = parse_txt(macro);
 
 	//TODO choose output path
-    generate_clicks("output.wav", parsed_macro, clicks, last_soft_time->value, next_soft_time->value, volume1->value, volume2->value);
+    generate_clicks("output.wav", parsed_macro, player1, player2, last_soft_time->value, next_soft_time->value, volume1->value, volume2->value);
     Macro_free(parsed_macro);
 }
 
 void update_clicks_callback() {
-	//unload_clicks(clicks); TODO: FIX THIS (!)
-	clicks = load_clicks("player1");
+	//if (player1) unload_clicks(player1); TODO: FIX THIS (!)
+	player1 = load_clicks("player1");
+	player2 = load_clicks("player2");
 }
 
 void download_callback() {
@@ -129,12 +131,12 @@ GUI* GUI_Init(int width, int height) {
 
     GUI_AddWidget(gui, render_button);
 
-	clicks = load_clicks("player1");
+	update_clicks_callback();
 	
-	//newest_version = get_version();
+	newest_version = get_version();
 
-	//if (newest_version) show_outdated_msg = strcmp(newest_version, CURRENT_VERSION);
-	//else show_outdated_msg = false;
+	if (newest_version) show_outdated_msg = strcmp(newest_version, CURRENT_VERSION);
+	else show_outdated_msg = false;
 
 	return gui;
 }

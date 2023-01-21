@@ -4,15 +4,13 @@
 #include <sys/stat.h>
 #include <time.h>
 
-//#include "wav.h"
-
 int folder_exists(char* folder) {
     struct stat sb;
 
     return stat(folder, &sb) == 0 && S_ISDIR(sb.st_mode);
 }
 
-int get_index_from_filename(char* filename) { //i know there is a way to improve this, however i am too lazy
+int get_index_from_filename(char* filename) {
     int num;
     sscanf(filename, "%d.wav", &num);
     return num;
@@ -141,8 +139,8 @@ drwav get_random_click(Clicks clicks) {
     return click;
 }
 
-int generate_clicks(char* path, Macro* macro, Clicks** clicks, float lsoft_clicks, float nsoft_clicks, float volume1, float volume2) {
-    drwav sample_click = clicks[0][0].files[clicks[0][0].start];
+int generate_clicks(char* path, Macro* macro, Clicks** player1, Clicks** player2, float lsoft_clicks, float nsoft_clicks, float volume1, float volume2) {
+    drwav sample_click = player1[0][0].files[player1[0][0].start];
 
     long unsigned sample_len = frames_to_samples((float)macro->actions[macro->action_num-1].frame, (float)macro->fps, (float)sample_click.sampleRate) + sample_click.totalPCMFrameCount * 2;
 
@@ -161,8 +159,11 @@ int generate_clicks(char* path, Macro* macro, Clicks** clicks, float lsoft_click
     time_t epoch_seconds = time(NULL);
     srand(epoch_seconds);
 
+    int p1_has_held = false;
+    int p2_has_held = false;
 
-    int was_hold_soft = false;
+    int p1_was_hold_soft = false;
+    int p2_was_hold_soft = false;
 
     for (int i = 0; i < macro->action_num; i++) {
         Action action = macro->actions[i];
@@ -177,25 +178,63 @@ int generate_clicks(char* path, Macro* macro, Clicks** clicks, float lsoft_click
             }
 
             if (i > 0) {
-                last_delta = action.frame - macro->actions[1 - 1].frame;
+                last_delta = action.frame - macro->actions[i - 1].frame;
             }
 
             //possibly change these
-            if (next_delta <= nsoft_clicks) is_soft = true;
-            if (last_delta <= lsoft_clicks) is_soft = true;
+            if (next_delta != -1 && next_delta <= nsoft_clicks) is_soft = true;
+            if (last_delta != -1 && last_delta <= lsoft_clicks) is_soft = true;
 
             drwav click;
-            if (is_soft && clicks[0][1].count) click = get_random_click(clicks[0][1]);
-            else click = get_random_click(clicks[0][0]);
+            if (is_soft && player1[0][1].count) click = get_random_click(player1[0][1]);
+            else click = get_random_click(player1[0][0]);
 
             write_samples(click, samples, frames_to_samples((float)action.frame, (float)macro->fps, (float)output.sampleRate), volume1 / 100.f);
-            was_hold_soft = is_soft;
-        } else {
+
+            p1_was_hold_soft = is_soft;
+            p1_has_held = true;
+        } else if (p1_has_held) {
             drwav click;
-            if (was_hold_soft && clicks[1][1].count) click = get_random_click(clicks[1][1]);
-            else click =  get_random_click(clicks[1][0]);
+            if (p1_was_hold_soft && player1[1][1].count) click = get_random_click(player1[1][1]);
+            else click =  get_random_click(player1[1][0]);
 
             write_samples(click, samples, frames_to_samples((float)action.frame, (float)macro->fps, (float)output.sampleRate), volume1 / 100.f);
+
+            p1_has_held = false;
+        }
+
+        if (action.player2_holding) {
+            int is_soft = false;
+            int next_delta = -1;
+            int last_delta = -1;
+
+            for (int j = i + 1; !macro->actions[j].player2_holding && j < macro->action_num ; j++) {
+                next_delta = macro->actions[j].frame - action.frame;
+            }
+
+            if (i > 0) {
+                last_delta = action.frame - macro->actions[i - 1].frame;
+            }
+
+            if (next_delta != -1 && next_delta <= nsoft_clicks) is_soft = true;
+            if (last_delta != -1 && last_delta <= lsoft_clicks) is_soft = true;
+
+            drwav click;
+            if (is_soft && player2[0][1].count) click = get_random_click(player2[0][1]);
+            else click = get_random_click(player2[0][0]);
+
+            write_samples(click, samples, frames_to_samples((float)action.frame, (float)macro->fps, (float)output.sampleRate), volume1 / 100.f);
+
+            p2_was_hold_soft = is_soft;
+            p2_has_held = true;
+        } else if (p2_has_held) {
+            drwav click;
+            if (p2_was_hold_soft && player2[1][1].count) click = get_random_click(player2[1][1]);
+            else click =  get_random_click(player2[1][0]);
+
+            write_samples(click, samples, frames_to_samples((float)action.frame, (float)macro->fps, (float)output.sampleRate), volume1 / 100.f);
+
+            p2_has_held = false;
         }
     }
 

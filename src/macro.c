@@ -29,7 +29,7 @@ Macro* parse_txt(char* path) {
 
     read = getline(&line, &len, f);
 
-    sscanf(line, "%i", &macro->fps); //add support for float fps values
+    sscanf(line, "%i", &macro->fps);
 
     while ((read = getline(&line, &len, f)) != -1) {
         if (read > 5) {
